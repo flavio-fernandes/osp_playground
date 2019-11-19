@@ -18,7 +18,8 @@ PRJ=$(openstack project show -f value -c id ${OS_PROJECT_NAME})
 SECGRP=$(openstack security group list -f value -c ID -c Name -c Project | grep ${PRJ} | cut -d' ' -f1)
 SUBNET="${NET}subnet"
 
-openstack port create --network ${NET} --fixed-ip subnet=${SUBNET} --security-group ${SECGRP} ${PORT_NAME} >/dev/null
+openstack port create --network ${NET} --fixed-ip subnet=${SUBNET} --security-group ${SECGRP} \
+	  --host $(hostname) ${PORT_NAME} >/dev/null
 
 RTR_IP=$(openstack subnet show ${SUBNET} -f value -c gateway_ip)
 IP_MASK=$(openstack subnet show -c cidr --format=value ${SUBNET} | cut -d/ -f2)
