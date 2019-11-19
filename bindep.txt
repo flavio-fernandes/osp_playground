@@ -1,0 +1,9 @@
+openvswitch-switch
+
+# util-linux provides flock
+util-linux
+
+# uuid-runtime provides uuidgen
+uuid-runtime
+
+crudini
