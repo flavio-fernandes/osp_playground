@@ -10,15 +10,16 @@ set -o errexit
 ## attaching it to a veth-pair that connects it to an ovs bridge
 
 ## examples:
-## create-fake-vm.sh "" 1.2.3.4/24 0e:00:00:00:00:12
+## create-fake-vm.sh '' 0e:00:00:00:00:12 ; # use dhcp
+## create-fake-vm.sh '' 0e:00:00:00:00:13 none
 ##
 ## EXT_PORT=41078fb4-e841-46ad-8fb6-178cd7c8b500 ; \
-##    create-fake-vm.sh $EXT_PORT 1.2.3.4/24 "" 1.2.3.254 666 8.8.8.8 9.9.9.9
+##    create-fake-vm.sh $EXT_PORT '' 1.2.3.4/24 1.2.3.254 666 8.8.8.8 9.9.9.9
 
 # Script Arguments:
 # $1 - UUID -- opaque uuid for external_port_id (and namespace). Can be ''
-# $2 - IP_AND_MASK -- Can be '' or the $ipAddress or 'dhcp'
-# $3 - MAC_ADDRESS -- a string formatted as 'xx:xx:xx:xx:xx:xx'. Can be ''
+# $2 - MAC_ADDRESS -- a string formatted as 'xx:xx:xx:xx:xx:xx'. Can be ''
+# $3 - IP_AND_MASK -- Can be '' or the $ipAddress or 'dhcp'. Default: dhcp
 # $4 - GATEWAY -- Can be '' or the gateway ip for the namespace (default route)
 # $5 - VLAN_TAG -- Vlan tag associated to access port in ovs bridge. Can be ''
 # $6 - DNS1 -- Nameserver 1. Can be ''
@@ -27,8 +28,8 @@ set -o errexit
 # $9 - OVS_BRIDGE -- to attach other side of veth pair (default: br-int)
 # $10 - FILE_CONF -- ini file with namespace params. Can be ''
 UUID=$1
-IP_AND_MASK=${2:-any}
-MAC_ADDRESS=${3:-any}
+MAC_ADDRESS=${2:-any}
+IP_AND_MASK=${3:-dhcp}
 GATEWAY=${4:-any}
 VLAN_TAG=${5:-none}
 DNS1=${6:-none}
@@ -83,8 +84,8 @@ do_create_ns_port () {
     # set -x
 
     ns_idx=$1
-    ip_addr=$2
-    mac_addr=$3
+    mac_addr=$2
+    ip_addr=$3
     gateway=$4
     vlan_tag=$5
     dns1=$6
@@ -127,7 +128,7 @@ do_create_ns_port () {
 
     if [ X"$ip_addr" = Xdhcp ]; then
         ip netns exec $ns dhclient -nw eth0
-    elif [ X"$ip_addr" != Xany -a -n "$ip_addr" ]; then
+    elif [ X"$ip_addr" != Xnone -a -n "$ip_addr" ]; then
         ip netns exec $ns ip addr add $ip_addr dev eth0
     fi
     if [ X"$gateway" != Xany -a -n "$gateway" ]; then
@@ -180,6 +181,6 @@ ovs-vsctl br-exists ${OVS_BRIDGE} || {
     exit 1
 }
 
-do_create_ns_port $NS_IDX $IP_AND_MASK $MAC_ADDRESS $GATEWAY $VLAN_TAG $DNS1 $DNS2 "$UUID" $MTU $OVS_BRIDGE $FILE_CONF
+do_create_ns_port $NS_IDX $MAC_ADDRESS $IP_AND_MASK $GATEWAY $VLAN_TAG $DNS1 $DNS2 "$UUID" $MTU $OVS_BRIDGE $FILE_CONF
 echo "$UUID namespace ns${NS_IDX} created and saved to $FILE_CONF"
 exit 0
