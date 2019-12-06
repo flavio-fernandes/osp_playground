@@ -25,8 +25,10 @@ GW=$(openstack subnet show ${SUBNET} -f value -c gateway_ip)
 IP_MASK=$(openstack subnet show -c cidr --format=value ${SUBNET} | cut -d/ -f2)
 LPORT_EXT_ID=$(openstack port show -c id --format=value ${PORT_NAME})
 LPORT_MAC=$(openstack port show -c mac_address --format=value ${PORT_NAME})
+
 LPORT_FIXED_IPS=$(openstack port show -c fixed_ips --format=value ${PORT_NAME})
 LPORT_IP=$(echo $LPORT_FIXED_IPS | awk -F'ip_address=' '{print $2}' | awk -F"'" '{print $2}')
+[ -z "${LPORT_IP}" ] && LPORT_IP=$(echo $LPORT_FIXED_IPS | awk -F'ip_address' '{print $2}' | awk -F"'" '{print $3}')
 
 OVN_PORT=$(sudo ovn-nbctl -f table -d bare --no-heading --columns=_uuid find Logical_Switch_Port name=${LPORT_EXT_ID})
 sudo ovn-nbctl lsp-set-addresses ${OVN_PORT} "${LPORT_MAC} ${LPORT_IP}"

@@ -102,7 +102,9 @@ MAC=$(openstack port show -c mac_address --format=value ${SUBP})
 [ X"${USE_DHCP}" != Xyes -a -n "${USE_DHCP}" ] && {
     FIXED_IPS=$(openstack port show -c fixed_ips --format=value ${SUBP})
     IP=$(echo $FIXED_IPS | awk -F'ip_address=' '{print $2}' | awk -F"'" '{print $2}')
+    [ -z "${IP}" ] && IP=$(echo $FIXED_IPS | awk -F'ip_address' '{print $2}' | awk -F"'" '{print $3}')
     SUBNET=$(echo $FIXED_IPS | awk -F'subnet_id=' '{print $2}' | awk -F"'" '{print $2}')
+    [ -z "${SUBNET}" ] && SUBNET=$(echo $FIXED_IPS | awk -F'subnet_id' '{print $2}' | awk -F"'" '{print $3}')
     IP_MASK=$(openstack subnet show -c cidr --format=value ${SUBNET} | cut -d/ -f2)
     GW=$(openstack subnet show ${SUBNET} -f value -c gateway_ip)
 
